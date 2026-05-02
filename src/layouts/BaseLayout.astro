@@ -1,0 +1,63 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE, getCanonicalUrl } from '../data/site';
+import '../styles/global.css';
+
+type BreadcrumbItem = { name: string; path: string };
+
+interface Props {
+  title: string;
+  description: string;
+  path: string;
+  breadcrumbItems?: BreadcrumbItem[];
+}
+
+const { title, description, path, breadcrumbItems = [] } = Astro.props;
+const canonicalUrl = getCanonicalUrl(path);
+const webPageSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: title,
+  description,
+  url: canonicalUrl,
+  inLanguage: 'en',
+  isPartOf: { '@type': 'WebSite', name: SITE.name, url: SITE.url }
+};
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: breadcrumbItems.map((item, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: item.name,
+    item: getCanonicalUrl(item.path)
+  }))
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <script type="application/ld+json" set:html={JSON.stringify(webPageSchema)}></script>
+    {breadcrumbItems.length > 0 && <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)}></script>}
+  </head>
+  <body>
+    <a class="skip-link" href="#content">Skip to content</a>
+    <Header />
+    <slot />
+    <Footer />
+  </body>
+</html>

@@ -1,0 +1,40 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { calculatorList } from '../data/calculators';
+
+const title = 'Free Ad Metric Calculators';
+const description = 'Calculate ROAS, CPC, CTR, CPM and other PPC metrics instantly.';
+---
+
+<BaseLayout title={title} description={description} path="/" breadcrumbItems={[{ name: 'Home', path: '/' }]}>
+  <main id="content">
+    <section class="home-hero">
+      <div class="container narrow">
+        <p class="eyebrow">PPC calculator hub</p>
+        <h1>Free Ad Metric Calculators</h1>
+        <p class="lede">Calculate ROAS, CPC, CTR, CPM and other PPC metrics instantly.</p>
+      </div>
+    </section>
+
+    <section class="container content-section" aria-labelledby="calculators-title">
+      <div class="section-heading">
+        <p class="eyebrow">Tools</p>
+        <h2 id="calculators-title">Popular PPC calculators</h2>
+      </div>
+      <div class="cards-grid">
+        {calculatorList.map((calculator) => (
+          <a class="calculator-card-link" href={calculator.path}>
+            <span>{calculator.name}</span>
+            <p>{calculator.cardText}</p>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <section class="container content-section narrow text-section">
+      <h2>Fast calculators for core ad metrics</h2>
+      <p>Ad Metric Tools helps advertisers, PPC managers, ecommerce operators, and marketers calculate common ad metrics without spreadsheets. Start with one of the calculators above, then use the related calculator links to move between ROAS, CPC, CTR, and CPM.</p>
+      <p>Every calculator includes the formula, a worked example, frequently asked questions, and real HTML links to related tools.</p>
+    </section>
+  </main>
+</BaseLayout>

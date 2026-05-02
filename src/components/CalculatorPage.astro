@@ -1,0 +1,77 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CalculatorTool from './CalculatorTool.astro';
+import { calculators } from '../data/calculators';
+import { getCanonicalUrl } from '../data/site';
+import type { CalculatorConfig } from '../data/calculators';
+
+interface Props { calculator: CalculatorConfig }
+
+const { calculator } = Astro.props;
+const relatedCalculators = calculator.related.map((id) => calculators[id]);
+const canonicalUrl = getCanonicalUrl(calculator.path);
+const embedCode = `<iframe src="${canonicalUrl}" title="${calculator.name} by Ad Metric Tools" width="100%" height="650" style="border:1px solid #e5e7eb;border-radius:12px;"></iframe>\n<p><a href="${canonicalUrl}">Calculator by Ad Metric Tools</a></p>`;
+const breadcrumbItems = [{ name: 'Home', path: '/' }, { name: calculator.name, path: calculator.path }];
+---
+
+<BaseLayout title={calculator.title} description={calculator.description} path={calculator.path} breadcrumbItems={breadcrumbItems}>
+  <main id="content">
+    <section class="page-hero">
+      <div class="container narrow">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a href="/">Home</a><span aria-hidden="true">/</span><span>{calculator.name}</span>
+        </nav>
+        <p class="eyebrow">Free PPC calculator</p>
+        <h1>{calculator.h1}</h1>
+        <p class="lede">{calculator.intro}</p>
+      </div>
+    </section>
+
+    <section class="container tool-section" aria-label={`${calculator.name} tool`}>
+      <CalculatorTool calculator={calculator} />
+    </section>
+
+    <section class="container content-grid" aria-label={`${calculator.name} guide`}>
+      <article class="content-card">
+        <h2>{calculator.shortName} formula</h2>
+        <div class="formula-list">
+          {calculator.formulas.map((formula) => <code>{formula}</code>)}
+        </div>
+        {calculator.formulaNote && <p>{calculator.formulaNote}</p>}
+      </article>
+      <article class="content-card">
+        <h2>Example</h2>
+        <p>{calculator.example}</p>
+      </article>
+    </section>
+
+    <section class="container content-section" aria-labelledby="faq-title">
+      <div class="section-heading">
+        <p class="eyebrow">FAQ</p>
+        <h2 id="faq-title">{calculator.name} FAQ</h2>
+      </div>
+      <div class="faq-list">
+        {calculator.faq.map((item) => (
+          <article class="faq-item">
+            <h3>{item.question}</h3>
+            <p>{item.answer}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="container content-grid bottom-grid">
+      <article class="content-card">
+        <h2>Related calculators</h2>
+        <ul class="link-list">
+          {relatedCalculators.map((related) => <li><a href={related.path}>{related.name}</a></li>)}
+        </ul>
+      </article>
+      <article class="content-card">
+        <h2>Embed this calculator</h2>
+        <p>Use this optional embed code with natural branded attribution.</p>
+        <textarea class="embed-code" readonly aria-label={`${calculator.name} embed code`}>{embedCode}</textarea>
+      </article>
+    </section>
+  </main>
+</BaseLayout>

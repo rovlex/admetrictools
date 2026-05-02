@@ -1,0 +1,291 @@
+---
+import type { CalculatorConfig } from '../data/calculators';
+
+interface Props { calculator: CalculatorConfig }
+const { calculator } = Astro.props;
+---
+
+<div class="calculator-shell" data-calculator={calculator.id}>
+  <form class="calculator-form" aria-labelledby={`${calculator.id}-form-title`} novalidate>
+    <div class="section-heading compact">
+      <p class="eyebrow">Calculator</p>
+      <h2 id={`${calculator.id}-form-title`}>Calculate {calculator.shortName}</h2>
+    </div>
+    {calculator.inputs.map((input) => (
+      <div class="field">
+        <label for={`${calculator.id}-${input.id}`}>{input.label}</label>
+        <input id={`${calculator.id}-${input.id}`} name={input.id} data-input={input.id} inputmode="decimal" autocomplete="off" placeholder={input.placeholder} aria-describedby={`${calculator.id}-${input.id}-help`} />
+        <p class="field-help" id={`${calculator.id}-${input.id}-help`}>{input.help}</p>
+      </div>
+    ))}
+  </form>
+
+  <section class="result-card" aria-labelledby={`${calculator.id}-results-title`} aria-live="polite">
+    <div class="section-heading compact">
+      <p class="eyebrow">Result</p>
+      <h2 id={`${calculator.id}-results-title`}>{calculator.shortName} result</h2>
+    </div>
+    <p class="validation-message" data-validation>Enter values to calculate.</p>
+    <dl class="result-grid">
+      {calculator.outputs.map((output) => (
+        <div class="result-item">
+          <dt>{output.label}</dt>
+          <dd data-result={output.id}>—</dd>
+        </div>
+      ))}
+    </dl>
+    <button class="button secondary" type="button" data-copy-results disabled>Copy result</button>
+    <p class="copy-status" data-copy-status aria-live="polite"></p>
+  </section>
+</div>
+
+<script>
+  type ParseResult =
+    | { ok: true; value: number; empty: false }
+    | { ok: false; value: null; empty: boolean };
+
+  type CalculatorRoot = HTMLElement & { dataset: { calculator?: string; copyText?: string } };
+
+  const dash = '—';
+
+  function parseValue(rawValue: string, percent = false): ParseResult {
+    const raw = rawValue.trim();
+    if (!raw) return { ok: false, value: null, empty: true };
+
+    const hasPercent = raw.includes('%');
+    const cleaned = raw.replace(/[$€£₪,\s]/g, '').replace(/%/g, '');
+
+    if (!/^-?(?:\d+|\d*\.\d+)$/.test(cleaned)) return { ok: false, value: null, empty: false };
+
+    const numeric = Number(cleaned);
+    if (!Number.isFinite(numeric)) return { ok: false, value: null, empty: false };
+
+    if (!percent) return { ok: true, value: numeric, empty: false };
+
+    const fraction = hasPercent || Math.abs(numeric) > 1 ? numeric / 100 : numeric;
+    return { ok: true, value: fraction, empty: false };
+  }
+
+  function input(root: CalculatorRoot, name: string, percent = false): ParseResult {
+    const field = root.querySelector<HTMLInputElement>(`[data-input="${name}"]`);
+    return parseValue(field?.value ?? '', percent);
+  }
+
+  function anyInput(root: CalculatorRoot): boolean {
+    return Array.from(root.querySelectorAll<HTMLInputElement>('[data-input]')).some((field) => field.value.trim().length > 0);
+  }
+
+  function show(root: CalculatorRoot, key: string, value: string): void {
+    const node = root.querySelector<HTMLElement>(`[data-result="${key}"]`);
+    if (node) node.textContent = value;
+  }
+
+  function message(root: CalculatorRoot, value: string): void {
+    const node = root.querySelector<HTMLElement>('[data-validation]');
+    if (node) node.textContent = value;
+  }
+
+  function copyText(root: CalculatorRoot, value: string): void {
+    root.dataset.copyText = value;
+    const button = root.querySelector<HTMLButtonElement>('[data-copy-results]');
+    if (button) button.disabled = value.length === 0;
+  }
+
+  function reset(root: CalculatorRoot, validation: string): void {
+    root.querySelectorAll<HTMLElement>('[data-result]').forEach((node) => {
+      node.textContent = dash;
+    });
+    copyText(root, '');
+    message(root, validation);
+  }
+
+  function money(value: number): string {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+  }
+
+  function num(value: number, digits = 2): string {
+    return new Intl.NumberFormat('en-US', { maximumFractionDigits: digits }).format(value);
+  }
+
+  function fixed(value: number): string {
+    return value.toFixed(2);
+  }
+
+  function requiredMissing(root: CalculatorRoot, items: Array<{ label: string; result: ParseResult }>, fallback: string): string | null {
+    const empty = items.filter((item) => item.result.empty).map((item) => item.label);
+    if (empty.length) return anyInput(root) ? `Enter ${empty.join(' and ')} to calculate.` : fallback;
+
+    const invalid = items.filter((item) => !item.result.ok).map((item) => item.label);
+    if (invalid.length) return `Check ${invalid.join(' and ')}. Use numbers such as 1000, $1,000, 1,000.50, or 10%.`;
+
+    return null;
+  }
+
+  function safeCopy(root: CalculatorRoot, text: string): void {
+    if (/NaN|Infinity|undefined/.test(text)) {
+      reset(root, 'Check the inputs and try again.');
+      return;
+    }
+    copyText(root, text);
+  }
+
+  function updateRoas(root: CalculatorRoot): void {
+    const revenue = input(root, 'revenue');
+    const adSpend = input(root, 'adSpend');
+    const margin = input(root, 'profitMargin', true);
+    const missing = requiredMissing(root, [
+      { label: 'revenue', result: revenue },
+      { label: 'ad spend', result: adSpend }
+    ], 'Enter revenue and ad spend to calculate ROAS.');
+
+    if (missing) return reset(root, missing);
+    if (!revenue.ok || !adSpend.ok) return;
+    if (revenue.value < 0) return reset(root, 'Revenue cannot be negative.');
+    if (adSpend.value <= 0) return reset(root, 'Ad spend must be greater than 0 for ROAS.');
+
+    const roas = revenue.value / adSpend.value;
+    if (!Number.isFinite(roas)) return reset(root, 'Check the inputs and try again.');
+
+    const roasRatio = `${fixed(roas)}x`;
+    const roasPercent = `${num(roas * 100)}%`;
+    let breakEven = dash;
+    let status = 'Add profit margin to compare break-even.';
+    let note = 'ROAS calculated. Add profit margin to calculate break-even ROAS.';
+
+    if (!margin.empty) {
+      if (!margin.ok) {
+        note = 'ROAS calculated. Profit margin should be a valid number such as 25, 25%, or 0.25.';
+      } else if (margin.value <= 0 || margin.value > 1) {
+        note = 'ROAS calculated. Profit margin must be greater than 0 and no more than 100%.';
+      } else {
+        const breakEvenValue = 1 / margin.value;
+        breakEven = `${fixed(breakEvenValue)}x`;
+        status = Math.abs(roas - breakEvenValue) < 0.005 ? 'At break-even' : roas > breakEvenValue ? 'Above break-even' : 'Below break-even';
+        note = 'ROAS calculated.';
+      }
+    }
+
+    show(root, 'roasRatio', roasRatio);
+    show(root, 'roasPercentage', roasPercent);
+    show(root, 'breakEvenRoas', breakEven);
+    show(root, 'profitabilityStatus', status);
+    message(root, note);
+    safeCopy(root, [`ROAS: ${roasRatio}`, `ROAS percentage: ${roasPercent}`, `Break-even ROAS: ${breakEven}`, `Profitability status: ${status}`].join('\n'));
+  }
+
+  function updateCpc(root: CalculatorRoot): void {
+    const adSpend = input(root, 'adSpend');
+    const clicks = input(root, 'clicks');
+    const missing = requiredMissing(root, [
+      { label: 'ad spend', result: adSpend },
+      { label: 'clicks', result: clicks }
+    ], 'Enter ad spend and clicks to calculate CPC.');
+
+    if (missing) return reset(root, missing);
+    if (!adSpend.ok || !clicks.ok) return;
+    if (adSpend.value < 0) return reset(root, 'Ad spend cannot be negative.');
+    if (clicks.value <= 0) return reset(root, 'Clicks must be greater than 0 for CPC.');
+
+    const value = adSpend.value / clicks.value;
+    if (!Number.isFinite(value)) return reset(root, 'Check the inputs and try again.');
+    const display = money(value);
+    show(root, 'cpc', display);
+    message(root, 'CPC calculated.');
+    safeCopy(root, `CPC: ${display}`);
+  }
+
+  function updateCtr(root: CalculatorRoot): void {
+    const clicks = input(root, 'clicks');
+    const impressions = input(root, 'impressions');
+    const missing = requiredMissing(root, [
+      { label: 'clicks', result: clicks },
+      { label: 'impressions', result: impressions }
+    ], 'Enter clicks and impressions to calculate CTR.');
+
+    if (missing) return reset(root, missing);
+    if (!clicks.ok || !impressions.ok) return;
+    if (clicks.value < 0) return reset(root, 'Clicks cannot be negative.');
+    if (impressions.value <= 0) return reset(root, 'Impressions must be greater than 0 for CTR.');
+
+    const value = (clicks.value / impressions.value) * 100;
+    if (!Number.isFinite(value)) return reset(root, 'Check the inputs and try again.');
+    const display = `${num(value)}%`;
+    show(root, 'ctr', display);
+    message(root, clicks.value > impressions.value ? 'CTR calculated. Check inputs if clicks are higher than impressions.' : 'CTR calculated.');
+    safeCopy(root, `CTR: ${display}`);
+  }
+
+  function updateCpm(root: CalculatorRoot): void {
+    const adSpend = input(root, 'adSpend');
+    const impressions = input(root, 'impressions');
+    const missing = requiredMissing(root, [
+      { label: 'ad spend', result: adSpend },
+      { label: 'impressions', result: impressions }
+    ], 'Enter ad spend and impressions to calculate CPM.');
+
+    if (missing) return reset(root, missing);
+    if (!adSpend.ok || !impressions.ok) return;
+    if (adSpend.value < 0) return reset(root, 'Ad spend cannot be negative.');
+    if (impressions.value <= 0) return reset(root, 'Impressions must be greater than 0 for CPM.');
+
+    const value = (adSpend.value / impressions.value) * 1000;
+    if (!Number.isFinite(value)) return reset(root, 'Check the inputs and try again.');
+    const display = money(value);
+    show(root, 'cpm', display);
+    message(root, 'CPM calculated.');
+    safeCopy(root, `CPM: ${display}`);
+  }
+
+  function update(root: CalculatorRoot): void {
+    if (root.dataset.calculator === 'roas') updateRoas(root);
+    else if (root.dataset.calculator === 'cpc') updateCpc(root);
+    else if (root.dataset.calculator === 'ctr') updateCtr(root);
+    else if (root.dataset.calculator === 'cpm') updateCpm(root);
+    else reset(root, 'Calculator is not configured.');
+  }
+
+  async function writeClipboard(text: string): Promise<boolean> {
+    if (!text) return false;
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        // Use fallback below.
+      }
+    }
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', 'true');
+    textarea.style.position = 'fixed';
+    textarea.style.top = '-1000px';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      return document.execCommand('copy');
+    } catch {
+      return false;
+    } finally {
+      textarea.remove();
+    }
+  }
+
+  document.querySelectorAll<CalculatorRoot>('[data-calculator]').forEach((root) => {
+    root.querySelectorAll<HTMLInputElement>('[data-input]').forEach((field) => {
+      field.addEventListener('input', () => update(root));
+    });
+
+    const button = root.querySelector<HTMLButtonElement>('[data-copy-results]');
+    const status = root.querySelector<HTMLElement>('[data-copy-status]');
+
+    button?.addEventListener('click', async () => {
+      const copied = await writeClipboard(root.dataset.copyText ?? '');
+      if (status) status.textContent = copied ? 'Copied.' : 'Copy failed. Select and copy the result manually.';
+      window.setTimeout(() => {
+        if (status) status.textContent = '';
+      }, 2500);
+    });
+
+    update(root);
+  });
+</script>

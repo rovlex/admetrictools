@@ -1,0 +1,15 @@
+---
+import { calculatorList } from '../data/calculators';
+---
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/" aria-label="Ad Metric Tools home">
+      <span class="brand-mark" aria-hidden="true">AM</span>
+      <span>Ad Metric Tools</span>
+    </a>
+    <nav class="primary-nav" aria-label="Primary navigation">
+      {calculatorList.map((calculator) => <a href={calculator.path}>{calculator.shortName}</a>)}
+    </nav>
+  </div>
+</header>

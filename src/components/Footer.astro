@@ -1,0 +1,18 @@
+---
+import { calculatorList } from '../data/calculators';
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <div>
+      <p class="footer-brand">Ad Metric Tools</p>
+      <p class="footer-text">Free PPC calculators for advertisers and marketers.</p>
+    </div>
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="/">Home</a>
+      {calculatorList.map((calculator) => <a href={calculator.path}>{calculator.name}</a>)}
+    </nav>
+  </div>
+  <div class="container copyright">© {year} Ad Metric Tools.</div>
+</footer>
