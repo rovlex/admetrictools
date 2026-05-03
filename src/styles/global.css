@@ -145,12 +145,25 @@ h3 { margin-bottom: 8px; font-size: 1.08rem; line-height: 1.3; }
   color: var(--muted);
   font-size: clamp(1.05rem, 2.2vw, 1.25rem);
 }
+
 .content-section, .tool-section { padding: 42px 0; }
+.compact-section { padding-top: 18px; }
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  padding: 16px 0 30px;
+}
+.cards-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+.bottom-grid { padding-bottom: 56px; }
 .section-heading { margin-bottom: 20px; }
 .section-heading.compact { margin-bottom: 16px; }
 .section-heading.compact h2 { margin-bottom: 0; font-size: 1.35rem; }
-.cards-grid, .content-grid { display: grid; gap: 18px; }
-.cards-grid { grid-template-columns: 1fr; }
+
 .calculator-card-link, .content-card, .calculator-form, .result-card, .faq-item {
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -171,7 +184,8 @@ h3 { margin-bottom: 8px; font-size: 1.08rem; line-height: 1.3; }
   letter-spacing: -0.02em;
 }
 .calculator-card-link p, .content-card p, .faq-item p, .text-section p { color: var(--muted); }
-.calculator-card-link p, .content-card p, .faq-item p:last-child, .text-section p:last-child { margin-bottom: 0; }
+.calculator-card-link p, .content-card p:last-child, .faq-item p:last-child, .text-section p:last-child { margin-bottom: 0; }
+
 .calculator-shell { display: grid; gap: 18px; align-items: start; }
 .calculator-form, .result-card, .content-card { padding: 22px; }
 .calculator-form { display: grid; gap: 18px; }
@@ -219,8 +233,13 @@ h3 { margin-bottom: 8px; font-size: 1.08rem; line-height: 1.3; }
 .button.secondary { width: 100%; color: var(--text); background: #fff; }
 .button.secondary:disabled { cursor: not-allowed; opacity: 0.55; }
 .copy-status { min-height: 1.5em; margin: 10px 0 0; font-size: 0.94rem; }
-.content-grid { grid-template-columns: 1fr; padding: 16px 0 30px; }
-.bottom-grid { padding-bottom: 56px; }
+
+.answer-card {
+  border-color: #bfdbfe;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.06);
+}
+.answer-card p:last-child { margin-bottom: 0; color: var(--muted-strong); }
 .formula-list { display: grid; gap: 10px; margin-bottom: 16px; }
 .formula-list code {
   display: block;
@@ -233,9 +252,74 @@ h3 { margin-bottom: 8px; font-size: 1.08rem; line-height: 1.3; }
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-size: 0.96rem;
 }
+.definition-list {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0 0;
+}
+.definition-list div {
+  display: grid;
+  gap: 4px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.definition-list dt {
+  color: var(--text);
+  font-weight: 800;
+}
+.definition-list dd {
+  margin: 0;
+  color: var(--muted);
+}
+.steps-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 22px;
+  color: var(--muted);
+}
+.steps-list li::marker {
+  color: var(--accent);
+  font-weight: 800;
+}
+.mini-block-list {
+  display: grid;
+  gap: 18px;
+}
+.mini-block {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.mini-block:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.mini-block p:last-child,
+.detail-card p:last-child { margin-bottom: 0; }
+.detail-grid { align-items: stretch; }
+.detail-card { height: 100%; }
 .faq-list { display: grid; gap: 14px; }
 .faq-item { padding: 20px; }
 .link-list { display: grid; gap: 10px; margin: 0; padding-left: 20px; }
+.related-context-list {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.related-context-list li {
+  display: grid;
+  gap: 4px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+.related-context-list li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.related-context-list a { font-weight: 800; }
+.related-context-list span { color: var(--muted); }
 .embed-code {
   width: 100%;
   min-height: 150px;
@@ -247,6 +331,7 @@ h3 { margin-bottom: 8px; font-size: 1.08rem; line-height: 1.3; }
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-size: 0.9rem;
 }
+
 .site-footer { border-top: 1px solid var(--line); background: var(--soft); color: var(--muted); }
 .footer-inner { display: grid; gap: 20px; padding: 30px 0 22px; }
 .footer-brand { margin-bottom: 4px; color: var(--text); font-weight: 850; }

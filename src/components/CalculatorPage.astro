@@ -9,6 +9,7 @@ interface Props { calculator: CalculatorConfig }
 
 const { calculator } = Astro.props;
 const relatedCalculators = calculator.related.map((id) => calculators[id]);
+const useWithCalculators = calculator.useWith.map((item) => ({ ...calculators[item.id], text: item.text }));
 const canonicalUrl = getCanonicalUrl(calculator.path);
 const embedCode = `<iframe src="${canonicalUrl}" title="${calculator.name} by Ad Metric Tools" width="100%" height="650" style="border:1px solid #e5e7eb;border-radius:12px;"></iframe>\n<p><a href="${canonicalUrl}">Calculator by Ad Metric Tools</a></p>`;
 const breadcrumbItems = [{ name: 'Home', path: '/' }, { name: calculator.name, path: calculator.path }];
@@ -31,17 +32,102 @@ const breadcrumbItems = [{ name: 'Home', path: '/' }, { name: calculator.name, p
       <CalculatorTool calculator={calculator} />
     </section>
 
-    <section class="container content-grid" aria-label={`${calculator.name} guide`}>
+    <section class="container content-section compact-section" aria-labelledby={`${calculator.id}-quick-answer-title`}>
+      <article class="content-card answer-card">
+        <p class="eyebrow">Quick answer</p>
+        <h2 id={`${calculator.id}-quick-answer-title`}>What is {calculator.shortName}?</h2>
+        <p>{calculator.quickAnswer}</p>
+      </article>
+    </section>
+
+    <section class="container content-grid" aria-label={`${calculator.name} formula and example`}>
       <article class="content-card">
         <h2>{calculator.shortName} formula</h2>
-        <div class="formula-list">
+        <p>{calculator.formulaIntro}</p>
+        <div class="formula-list" aria-label={`${calculator.shortName} formulas`}>
           {calculator.formulas.map((formula) => <code>{formula}</code>)}
         </div>
         {calculator.formulaNote && <p>{calculator.formulaNote}</p>}
+        <dl class="definition-list">
+          {calculator.variables.map((variable) => (
+            <div>
+              <dt>{variable.name}</dt>
+              <dd>{variable.description}</dd>
+            </div>
+          ))}
+        </dl>
       </article>
       <article class="content-card">
-        <h2>Example</h2>
+        <h2>{calculator.shortName} calculation example</h2>
         <p>{calculator.example}</p>
+        <ol class="steps-list">
+          {calculator.exampleSteps.map((step) => <li>{step}</li>)}
+        </ol>
+      </article>
+    </section>
+
+    <section class="container content-grid" aria-label={`${calculator.name} usage and interpretation`}>
+      <article class="content-card">
+        <h2>How to use this {calculator.shortName} calculator</h2>
+        <ol class="steps-list">
+          {calculator.howToUse.map((step) => <li>{step}</li>)}
+        </ol>
+      </article>
+      <article class="content-card">
+        <h2>How to interpret {calculator.shortName}</h2>
+        <div class="mini-block-list">
+          {calculator.interpretation.map((item) => (
+            <section class="mini-block">
+              <h3>{item.heading}</h3>
+              <p>{item.body}</p>
+            </section>
+          ))}
+        </div>
+      </article>
+    </section>
+
+    <section class="container content-section" aria-labelledby={`${calculator.id}-platforms-title`}>
+      <div class="section-heading">
+        <p class="eyebrow">Use cases</p>
+        <h2 id={`${calculator.id}-platforms-title`}>{calculator.shortName} by platform and campaign type</h2>
+      </div>
+      <div class="cards-grid detail-grid">
+        {calculator.platformNotes.map((item) => (
+          <article class="content-card detail-card">
+            <h3>{item.heading}</h3>
+            <p>{item.body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="container content-section" aria-labelledby={`${calculator.id}-mistakes-title`}>
+      <div class="section-heading">
+        <p class="eyebrow">Avoid mistakes</p>
+        <h2 id={`${calculator.id}-mistakes-title`}>Common {calculator.shortName} calculation mistakes</h2>
+      </div>
+      <div class="cards-grid detail-grid">
+        {calculator.commonMistakes.map((item) => (
+          <article class="content-card detail-card">
+            <h3>{item.heading}</h3>
+            <p>{item.body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="container content-section compact-section" aria-labelledby={`${calculator.id}-use-with-title`}>
+      <article class="content-card">
+        <p class="eyebrow">Related PPC metrics</p>
+        <h2 id={`${calculator.id}-use-with-title`}>Use {calculator.shortName} with related calculators</h2>
+        <ul class="related-context-list">
+          {useWithCalculators.map((related) => (
+            <li>
+              <a href={related.path}>{related.name}</a>
+              <span>{related.text}</span>
+            </li>
+          ))}
+        </ul>
       </article>
     </section>
 

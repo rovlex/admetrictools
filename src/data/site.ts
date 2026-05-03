@@ -1,7 +1,7 @@
 export const SITE = {
   name: 'Ad Metric Tools',
   url: 'https://admetrictools.com',
-  description: 'Free ad metric calculators for ROAS, CPC, CTR, CPM and other PPC metrics.'
+  description: 'Free PPC calculators for ROAS, CPC, CTR, and CPM.'
 } as const;
 
 export function getCanonicalUrl(path: string): string {
